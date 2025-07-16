@@ -8,14 +8,13 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 MODEL_DIR = os.path.join(os.path.dirname(__file__), 'model', '1752031553')
 
-# --- 2. Load The Model and Get The Predictor Function ---
+# --- 2. Load The Model Using the Standard TensorFlow Method ---
 try:
-    # Load the model as a layer
-    tfsmlayer = tf.keras.layers.TFSMLayer(MODEL_DIR, call_endpoint='serving_default')
+    # This is the fundamental way to load a SavedModel, avoiding the ambiguous Keras 3 wrapper.
+    loaded_model = tf.saved_model.load(MODEL_DIR)
     
-    # NEW: Instead of using the layer directly, get the concrete function
-    # This is a more robust way to call the exact model signature
-    predictor = tfsmlayer.signatures['serving_default']
+    # Now, we can reliably access the signatures.
+    predictor = loaded_model.signatures['serving_default']
     
     print(f"TensorFlow SavedModel's 'serving_default' signature loaded successfully.")
 
@@ -51,10 +50,11 @@ def interactive_predict():
                 for key, value in input_data.items()
             }
             
-            # --- FINAL CHANGE: Use the direct predictor with keyword arguments ---
+            # Call the direct predictor function with keyword arguments.
+            # This matches the signature from your first error log.
             prediction_dict = predictor(**processed_data)
             
-            # Use the output key from the error log
+            # Use the output key from that same error log.
             predicted_tensor = prediction_dict['dense_3']
             
             predicted_score = predicted_tensor.numpy()[0][0]
