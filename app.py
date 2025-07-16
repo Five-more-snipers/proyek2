@@ -8,13 +8,20 @@ app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 MODEL_DIR = os.path.join(os.path.dirname(__file__), 'model', '1752031553')
 
-# --- 2. Load The Model using TFSMLayer for Keras 3 ---
+# --- 2. Load The Model and Get The Predictor Function ---
 try:
-    model = tf.keras.layers.TFSMLayer(MODEL_DIR, call_endpoint='serving_default')
-    print(f"TensorFlow SavedModel loaded successfully as a TFSMLayer from: {MODEL_DIR}")
+    # Load the model as a layer
+    tfsmlayer = tf.keras.layers.TFSMLayer(MODEL_DIR, call_endpoint='serving_default')
+    
+    # NEW: Instead of using the layer directly, get the concrete function
+    # This is a more robust way to call the exact model signature
+    predictor = tfsmlayer.signatures['serving_default']
+    
+    print(f"TensorFlow SavedModel's 'serving_default' signature loaded successfully.")
+
 except Exception as e:
-    print(f"Error loading model: {e}")
-    model = None
+    print(f"Error loading model or signature: {e}")
+    predictor = None
 
 # --- 3. Define Features and Helper Function ---
 NUMERIC_FEATURES = [
@@ -31,8 +38,8 @@ def interactive_predict():
     prediction_result = None
 
     if request.method == "POST":
-        if not model:
-            return "Model is not loaded, cannot make a prediction.", 500
+        if not predictor:
+            return "Model predictor is not loaded, cannot make a prediction.", 500
             
         try:
             input_data = {}
@@ -44,10 +51,10 @@ def interactive_predict():
                 for key, value in input_data.items()
             }
             
-            # --- FINAL CHANGE: Pass the dictionary as the 'inputs' keyword argument ---
-            prediction_dict = model(inputs=processed_data)
+            # --- FINAL CHANGE: Use the direct predictor with keyword arguments ---
+            prediction_dict = predictor(**processed_data)
             
-            # The output key is likely still correct from the previous error log
+            # Use the output key from the error log
             predicted_tensor = prediction_dict['dense_3']
             
             predicted_score = predicted_tensor.numpy()[0][0]
