@@ -3,20 +3,20 @@ import tensorflow as tf
 from flask import Flask, request, render_template
 from prometheus_flask_exporter import PrometheusMetrics
 
-
+# --- 1. Initialize App and Add Metrics ---
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 MODEL_DIR = os.path.join(os.path.dirname(__file__), 'model', '1752031553')
 
-
+# --- 2. Load The Model using TFSMLayer for Keras 3 ---
 try:
-    # Keras 3 requires using TFSMLayer to load a legacy SavedModel format.
     model = tf.keras.layers.TFSMLayer(MODEL_DIR, call_endpoint='serving_default')
     print(f"TensorFlow SavedModel loaded successfully as a TFSMLayer from: {MODEL_DIR}")
 except Exception as e:
     print(f"Error loading model: {e}")
     model = None
 
+# --- 3. Define Features and Helper Function ---
 NUMERIC_FEATURES = [
     'study_hours_per_day', 'social_media_hours', 'netflix_hours',
     'sleep_hours', 'mental_health_rating', 'exercise_frequency'
@@ -25,6 +25,7 @@ NUMERIC_FEATURES = [
 def transformed_name(key):
     return f"{key}_xf"
 
+# --- 4. Define Main Interactive Route ---
 @app.route("/", methods=["GET", "POST"])
 def interactive_predict():
     prediction_result = None
@@ -43,16 +44,19 @@ def interactive_predict():
                 for key, value in input_data.items()
             }
             
-
-            prediction_dict = model(processed_data)
+            # --- CHANGE #1: Unpack the dictionary into keyword arguments using ** ---
+            prediction_dict = model(**processed_data)
             
-            predicted_tensor = prediction_dict['output_0']
+            # --- CHANGE #2: Use the correct output key revealed by the error log ---
+            predicted_tensor = prediction_dict['dense_3']
             
             predicted_score = predicted_tensor.numpy()[0][0]
             
             prediction_result = f"{predicted_score:.2f}"
 
         except Exception as e:
+            # Adding a more detailed error log for debugging
+            print(f"An error occurred during prediction: {e}")
             return f"An error occurred during prediction: {e}", 400
 
     return render_template("index.html", prediction=prediction_result)
