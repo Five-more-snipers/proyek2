@@ -44,10 +44,10 @@ def interactive_predict():
                 for key, value in input_data.items()
             }
             
-            # --- CHANGE #1: Unpack the dictionary into keyword arguments using ** ---
-            prediction_dict = model(**processed_data)
+            # --- FINAL CHANGE: Pass the dictionary as the 'inputs' keyword argument ---
+            prediction_dict = model(inputs=processed_data)
             
-            # --- CHANGE #2: Use the correct output key revealed by the error log ---
+            # The output key is likely still correct from the previous error log
             predicted_tensor = prediction_dict['dense_3']
             
             predicted_score = predicted_tensor.numpy()[0][0]
@@ -55,7 +55,6 @@ def interactive_predict():
             prediction_result = f"{predicted_score:.2f}"
 
         except Exception as e:
-            # Adding a more detailed error log for debugging
             print(f"An error occurred during prediction: {e}")
             return f"An error occurred during prediction: {e}", 400
 
