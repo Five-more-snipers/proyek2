@@ -3,5 +3,5 @@ tensorflow==2.19.0
 numpy==2.1.3
 gunicorn==23.0.0
 prometheus-flask-exporter==0.23.2
-tfx~=1.19.0
-jupyterlab~=4.2.0
+tfx~=1.15.0
+jupyterlab~=4.4.4
