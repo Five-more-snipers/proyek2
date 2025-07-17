@@ -1,7 +1,8 @@
-flask
-tensorflow
-numpy
-gunicorn
-prometheus-flask-exporter
-tfx
-jupyterlab
+Flask==3.1.1
+keras_tuner==1.4.7
+ml_pipelines_sdk==1.15.0
+prometheus_flask_exporter==0.23.2
+tensorflow==2.15.1
+tensorflow_transform==1.15.0
+tfx==1.15.0
+jupyterlab~=4.4.4
