@@ -6,3 +6,4 @@ tensorflow==2.15.1
 tensorflow_transform==1.15.0
 tfx==1.15.0
 jupyterlab~=4.4.4
+gunicorn~=23.0.0
